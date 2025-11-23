@@ -1,16 +1,15 @@
 package httpfs_test
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"testing"
 
 	"github.com/absfs/httpfs"
 	"github.com/absfs/memfs"
-
-	"testing"
 )
 
 func TestFileServer(t *testing.T) {
@@ -38,7 +37,7 @@ func TestFileServer(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if string(data) != "foo bar bat." {
 		t.Fatal("wrong response")
