@@ -1,3 +1,7 @@
+// Package httpfs implements a net/http FileSystem interface compatible
+// wrapper around absfs.Filer that supports both read and write operations.
+// It bridges the gap between the absfs filesystem abstraction and Go's
+// standard http.FileServer.
 package httpfs
 
 import (
@@ -7,12 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/absfs/absfs"
 )
-
-var ErrNotImplemented = errors.New("not implemented")
 
 type Httpfs struct {
 	fs absfs.Filer
@@ -112,12 +112,12 @@ func (filer *Httpfs) Chmod(name string, mode os.FileMode) error {
 	return filer.fs.Chmod(name, mode)
 }
 
-// Chtimes changes the access and modification times of the named file
+// Chtimes changes the access and modification times of the named file.
 func (filer *Httpfs) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return filer.fs.Chtimes(name, atime, mtime)
 }
 
-// Chown changes the owner and group ids of the named file
+// Chown changes the owner and group ids of the named file.
 func (filer *Httpfs) Chown(name string, uid, gid int) error {
 	return filer.fs.Chown(name, uid, gid)
 }
