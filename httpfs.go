@@ -107,17 +107,17 @@ func (filer *Httpfs) Stat(name string) (os.FileInfo, error) {
 	return filer.fs.Stat(name)
 }
 
-//Chmod changes the mode of the named file to mode.
+// Chmod changes the mode of the named file to mode.
 func (filer *Httpfs) Chmod(name string, mode os.FileMode) error {
 	return filer.fs.Chmod(name, mode)
 }
 
-//Chtimes changes the access and modification times of the named file
+// Chtimes changes the access and modification times of the named file
 func (filer *Httpfs) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return filer.fs.Chtimes(name, atime, mtime)
 }
 
-//Chown changes the owner and group ids of the named file
+// Chown changes the owner and group ids of the named file
 func (filer *Httpfs) Chown(name string, uid, gid int) error {
 	return filer.fs.Chown(name, uid, gid)
 }
