@@ -62,8 +62,25 @@ func (filer *Httpfs) Remove(name string) error {
 	return filer.fs.Remove(name)
 }
 
+// RemoveAller is an optional interface that filesystems can implement
+// to provide optimized recursive directory removal.
+type RemoveAller interface {
+	RemoveAll(path string) error
+}
+
 // RemoveAll removes a directory after removing all children of that directory.
-func (filer *Httpfs) RemoveAll(path string) (err error) {
+// If the underlying filesystem implements RemoveAller, it delegates to that.
+// Returns nil for non-existent paths (matching os.RemoveAll behavior).
+func (filer *Httpfs) RemoveAll(path string) error {
+	// Check if the underlying filesystem implements RemoveAll
+	if ra, ok := filer.fs.(RemoveAller); ok {
+		err := ra.RemoveAll(path)
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
 	info, err := filer.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -72,12 +89,13 @@ func (filer *Httpfs) RemoveAll(path string) (err error) {
 		return err
 	}
 
-	// if it's not a directory remove it and return
+	// If it's not a directory, just remove it
 	if !info.IsDir() {
 		return filer.Remove(path)
 	}
 
-	f, err := filer.OpenFile(path, os.O_RDWR, 0700)
+	// Open directory read-only to list entries
+	f, err := filer.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -85,21 +103,32 @@ func (filer *Httpfs) RemoveAll(path string) (err error) {
 		return err
 	}
 
-	// get and loop through each directory entry calling remove all recursively
 	infos, err := f.Readdir(0)
+	f.Close()
 	if err != nil {
 		return err
 	}
-	f.Close()
 
 	for _, info := range infos {
-		err = filer.RemoveAll(filepath.Join(path, info.Name()))
-		if err != nil {
+		name := info.Name()
+		// Skip . and .. to avoid infinite recursion
+		if name == "." || name == ".." {
+			continue
+		}
+		if err := filer.RemoveAll(filepath.Join(path, name)); err != nil {
 			return err
 		}
 	}
 
-	return filer.Remove(path)
+	err = filer.Remove(path)
+	// Some filesystems (e.g., memfs) return "directory not empty" even when
+	// only . and .. remain. Check if the directory was actually removed.
+	if err != nil {
+		if _, statErr := filer.Stat(path); os.IsNotExist(statErr) {
+			return nil
+		}
+	}
+	return err
 }
 
 // Stat returns the FileInfo structure describing file. If there is an error, it will be of type *PathError.
