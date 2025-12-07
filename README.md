@@ -1,9 +1,9 @@
 # httpfs
 
-[![CI](https://github.com/absfs/httpfs/actions/workflows/ci.yml/badge.svg)](https://github.com/absfs/httpfs/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/absfs/httpfs.svg)](https://pkg.go.dev/github.com/absfs/httpfs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/absfs/httpfs)](https://goreportcard.com/report/github.com/absfs/httpfs)
-[![GoDoc](https://godoc.org/github.com/absfs/httpfs?status.svg)](https://godoc.org/github.com/absfs/httpfs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/absfs/httpfs/actions/workflows/ci.yml/badge.svg)](https://github.com/absfs/httpfs/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 The `httpfs` package implements a `net/http` FileSystem interface compatible object that includes both file reading and file writing operations. It provides a bridge between the [absfs](https://github.com/absfs/absfs) filesystem abstraction and Go's standard `http.FileServer`.
 
