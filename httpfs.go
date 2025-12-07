@@ -7,7 +7,7 @@ package httpfs
 import (
 	"net/http"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
@@ -42,12 +42,13 @@ func (filer *Httpfs) Mkdir(name string, perm os.FileMode) error {
 // MkdirAll creates all missing directories in `name` without returning an error
 // for directories that already exist
 func (filer *Httpfs) MkdirAll(name string, perm os.FileMode) error {
-	p := string(filepath.Separator)
-	for _, name := range strings.Split(name, p) {
+	// Virtual filesystems use forward slashes
+	p := "/"
+	for _, name := range strings.Split(name, "/") {
 		if name == "" {
 			continue
 		}
-		p = filepath.Join(p, name)
+		p = path.Join(p, name)
 		err := filer.Mkdir(p, perm)
 		if err != nil && !os.IsExist(err) {
 			return err
@@ -71,17 +72,17 @@ type RemoveAller interface {
 // RemoveAll removes a directory after removing all children of that directory.
 // If the underlying filesystem implements RemoveAller, it delegates to that.
 // Returns nil for non-existent paths (matching os.RemoveAll behavior).
-func (filer *Httpfs) RemoveAll(path string) error {
+func (filer *Httpfs) RemoveAll(pathname string) error {
 	// Check if the underlying filesystem implements RemoveAll
 	if ra, ok := filer.fs.(RemoveAller); ok {
-		err := ra.RemoveAll(path)
+		err := ra.RemoveAll(pathname)
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
 	}
 
-	info, err := filer.Stat(path)
+	info, err := filer.Stat(pathname)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -91,11 +92,11 @@ func (filer *Httpfs) RemoveAll(path string) error {
 
 	// If it's not a directory, just remove it
 	if !info.IsDir() {
-		return filer.Remove(path)
+		return filer.Remove(pathname)
 	}
 
 	// Open directory read-only to list entries
-	f, err := filer.OpenFile(path, os.O_RDONLY, 0)
+	f, err := filer.OpenFile(pathname, os.O_RDONLY, 0)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -115,16 +116,16 @@ func (filer *Httpfs) RemoveAll(path string) error {
 		if name == "." || name == ".." {
 			continue
 		}
-		if err := filer.RemoveAll(filepath.Join(path, name)); err != nil {
+		if err := filer.RemoveAll(path.Join(pathname, name)); err != nil {
 			return err
 		}
 	}
 
-	err = filer.Remove(path)
+	err = filer.Remove(pathname)
 	// Some filesystems (e.g., memfs) return "directory not empty" even when
 	// only . and .. remain. Check if the directory was actually removed.
 	if err != nil {
-		if _, statErr := filer.Stat(path); os.IsNotExist(statErr) {
+		if _, statErr := filer.Stat(pathname); os.IsNotExist(statErr) {
 			return nil
 		}
 	}
