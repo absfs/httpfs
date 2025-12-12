@@ -5,6 +5,7 @@
 package httpfs
 
 import (
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -150,4 +151,21 @@ func (filer *Httpfs) Chtimes(name string, atime time.Time, mtime time.Time) erro
 // Chown changes the owner and group ids of the named file.
 func (filer *Httpfs) Chown(name string, uid, gid int) error {
 	return filer.fs.Chown(name, uid, gid)
+}
+
+// ReadDir reads the named directory and returns a list of directory entries
+// sorted by filename.
+func (filer *Httpfs) ReadDir(name string) ([]fs.DirEntry, error) {
+	return filer.fs.ReadDir(name)
+}
+
+// ReadFile reads the named file and returns its contents.
+// A successful call returns err == nil, not err == EOF.
+func (filer *Httpfs) ReadFile(name string) ([]byte, error) {
+	return filer.fs.ReadFile(name)
+}
+
+// Sub returns an fs.FS corresponding to the subtree rooted at dir.
+func (filer *Httpfs) Sub(dir string) (fs.FS, error) {
+	return absfs.FilerToFS(filer.fs, dir)
 }
